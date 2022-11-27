@@ -5,6 +5,9 @@ plugins {
     id 'kotlinx-serialization'
 }
 
+def props = new Properties();
+file("app.properties").withInputStream { props.load(it) }
+
 android {
     namespace 'jp.cordea.flatten'
     compileSdk 33
@@ -22,6 +25,13 @@ android {
         }
     }
 
+    flavorDimensions "app"
+    productFlavors {
+        dev {
+            dimension "app"
+            buildConfigField "String", "FLAT_TOKEN", "\"${props.getProperty("flat.token")}\""
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
