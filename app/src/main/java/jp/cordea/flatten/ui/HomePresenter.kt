@@ -5,6 +5,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import jp.cordea.flatten.repository.ScoreRepository
 import jp.cordea.flatten.repository.UserRepository
+import java.time.LocalDateTime
 
 sealed class HomeModel {
     object Loading : HomeModel()
@@ -14,7 +15,11 @@ sealed class HomeModel {
     ) : HomeModel()
 }
 
-class HomeItemModel(val title: String)
+class HomeItemModel(
+    val title: String,
+    val subtitle: String,
+    val createdAt: LocalDateTime
+)
 
 @Composable
 fun homePresenter(
@@ -29,7 +34,7 @@ fun homePresenter(
         }
         return HomeModel.Loaded(
             user.picture,
-            scores.map { HomeItemModel(it.title) }
+            scores.map { HomeItemModel(it.title, it.subtitle, it.publicationDate) }
         )
     } ?: return HomeModel.Loading
 }
