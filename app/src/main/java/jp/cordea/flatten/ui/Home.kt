@@ -1,11 +1,62 @@
 package jp.cordea.flatten.ui
 
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.Flow
 import org.koin.androidx.compose.get
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun Home(models: Flow<HomeModel> = get()) {
-    Text("Android")
+    val model by models.collectAsState(initial = HomeModel.Loading)
+    Scaffold(
+        topBar = {
+            MediumTopAppBar(
+                actions = {
+                    when (model) {
+                        is HomeModel.Loaded ->
+                            IconButton(onClick = { /*TODO*/ }) {
+                                Icon(imageVector = Icons.Filled.Home, contentDescription = "")
+                            }
+                        HomeModel.Loading -> {}
+                    }
+                },
+                title = { Text(text = "Home") }
+            )
+        }
+    ) { padding ->
+        when (val m = model) {
+            is HomeModel.Loaded ->
+                LazyColumn(
+                    modifier = Modifier.padding(padding)
+                ) {
+                    m.items.map {
+                        item {
+                            HomeItem(model = it)
+                        }
+                    }
+                }
+            HomeModel.Loading ->
+                CircularProgressIndicator()
+        }
+    }
+}
+
+@Composable
+private fun HomeItem(model: HomeItemModel) {
+    Row {
+        Text(
+            modifier = Modifier.padding(16.dp),
+            text = model.title
+        )
+    }
 }
