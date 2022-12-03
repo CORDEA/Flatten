@@ -3,14 +3,13 @@ package jp.cordea.flatten.ui
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
 import kotlinx.coroutines.flow.Flow
 import org.koin.androidx.compose.get
 
@@ -22,11 +21,13 @@ fun Home(models: Flow<HomeModel> = get()) {
         topBar = {
             MediumTopAppBar(
                 actions = {
-                    when (model) {
-                        is HomeModel.Loaded ->
-                            IconButton(onClick = { /*TODO*/ }) {
-                                Icon(imageVector = Icons.Filled.Home, contentDescription = "")
-                            }
+                    when (val m = model) {
+                        is HomeModel.Loaded -> IconButton(onClick = { /*TODO*/ }) {
+                            Icon(
+                                painter = rememberAsyncImagePainter(m.thumbnail),
+                                contentDescription = "Profile"
+                            )
+                        }
                         HomeModel.Loading -> {}
                     }
                 },
