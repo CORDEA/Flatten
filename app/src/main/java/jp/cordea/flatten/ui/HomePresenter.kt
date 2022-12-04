@@ -35,9 +35,10 @@ fun homePresenter(
     scoreRepository: ScoreRepository
 ): HomeModel {
     var event: HomeUiEvent by remember { mutableStateOf(HomeUiEvent.Empty) }
-    val userState by userRepository.find().collectAsState(initial = null)
+    val userState by userRepository.find(forceRefresh = false).collectAsState(initial = null)
     userState?.let { user ->
-        val scores by scoreRepository.findLikes(user.id).collectAsState(initial = emptyList())
+        val scores by scoreRepository.findLikes(user.id, forceRefresh = false)
+            .collectAsState(initial = emptyList())
         if (scores.isEmpty()) {
             return HomeModel.Loading
         }
