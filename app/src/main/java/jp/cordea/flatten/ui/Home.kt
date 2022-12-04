@@ -1,13 +1,17 @@
 package jp.cordea.flatten.ui
 
+import android.content.Intent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,15 +47,7 @@ fun Home(models: Flow<HomeModel> = get()) {
     ) { padding ->
         when (val m = model) {
             is HomeModel.Loaded ->
-                LazyColumn(
-                    modifier = Modifier.padding(padding)
-                ) {
-                    m.items.map {
-                        item {
-                            HomeItem(model = it)
-                        }
-                    }
-                }
+                Body(model = m, modifier = Modifier.padding(padding))
             HomeModel.Loading ->
                 CircularProgressIndicator()
         }
@@ -59,42 +55,71 @@ fun Home(models: Flow<HomeModel> = get()) {
 }
 
 @Composable
-private fun HomeItem(model: HomeItemModel) {
-    Row(
-        modifier = Modifier
-            .padding(16.dp)
-            .fillMaxWidth()
+private fun Body(
+    model: HomeModel.Loaded,
+    modifier: Modifier
+) {
+    val event by model.onEvent.collectAsState(initial = null)
+    val context = LocalContext.current
+    LaunchedEffect(event) {
+        when (val e = event) {
+            is HomeEvent.OpenUrl ->
+                context.startActivity(Intent(Intent.ACTION_VIEW, e.url))
+            null -> {}
+        }
+    }
+    LazyColumn(
+        modifier = modifier
     ) {
-        Column(
+        model.items.map {
+            item {
+                HomeItem(model = it)
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeItem(model: HomeItemModel) {
+    Box(modifier = Modifier.clickable {
+        model.onClick()
+    }) {
+        Row(
             modifier = Modifier
-                .weight(1f)
-                .align(Alignment.CenterVertically)
+                .padding(16.dp)
+                .fillMaxWidth()
         ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .align(Alignment.CenterVertically)
+            ) {
+                Text(
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    text = model.title
+                )
+                Text(
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    text = model.subtitle
+                )
+            }
             Text(
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                text = model.title
-            )
-            Text(
-                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .align(Alignment.CenterVertically),
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                text = model.subtitle
+                maxLines = 1,
+                overflow = TextOverflow.Visible,
+                text = DateTimeFormatter.ofPattern("M/dd").format(model.createdAt)
             )
         }
-        Text(
-            modifier = Modifier
-                .padding(start = 8.dp)
-                .align(Alignment.CenterVertically),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Visible,
-            text = DateTimeFormatter.ofPattern("M/dd").format(model.createdAt)
-        )
     }
 }
 
@@ -106,6 +131,6 @@ fun HomeItem() {
             title = "title",
             subtitle = "subtitle",
             createdAt = LocalDateTime.now()
-        )
+        ) {}
     )
 }
