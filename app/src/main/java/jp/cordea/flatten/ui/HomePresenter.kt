@@ -4,9 +4,6 @@ import android.net.Uri
 import androidx.compose.runtime.*
 import jp.cordea.flatten.repository.ScoreRepository
 import jp.cordea.flatten.repository.UserRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
 sealed class HomeModel {
@@ -15,13 +12,14 @@ sealed class HomeModel {
         val thumbnail: String,
         val onClickIcon: () -> Unit,
         val items: List<HomeItemModel>,
-        val onEvent: Flow<HomeEvent>
+        val uiEvent: HomeUiEvent
     ) : HomeModel()
 }
 
-sealed class HomeEvent {
-    object NavigateToUser : HomeEvent()
-    class OpenUrl(val url: Uri) : HomeEvent()
+sealed class HomeUiEvent {
+    object NavigateToUser : HomeUiEvent()
+    class OpenUrl(val url: Uri) : HomeUiEvent()
+    object Empty : HomeUiEvent()
 }
 
 class HomeItemModel(
@@ -36,8 +34,7 @@ fun homePresenter(
     userRepository: UserRepository,
     scoreRepository: ScoreRepository
 ): HomeModel {
-    val scope = rememberCoroutineScope()
-    val flow = remember { MutableSharedFlow<HomeEvent>() }
+    var event: HomeUiEvent by remember { mutableStateOf(HomeUiEvent.Empty) }
     val userState by userRepository.find().collectAsState(initial = null)
     userState?.let { user ->
         val scores by scoreRepository.findLikes(user.id).collectAsState(initial = emptyList())
@@ -47,18 +44,14 @@ fun homePresenter(
         return HomeModel.Loaded(
             user.picture,
             {
-                scope.launch {
-                    flow.emit(HomeEvent.NavigateToUser)
-                }
+                event = HomeUiEvent.NavigateToUser
             },
             scores.map {
                 HomeItemModel(it.title, it.subtitle, it.publicationDate) {
-                    scope.launch {
-                        flow.emit(HomeEvent.OpenUrl(Uri.parse(it.htmlUrl)))
-                    }
+                    event = HomeUiEvent.OpenUrl(Uri.parse(it.htmlUrl))
                 }
             },
-            flow
+            event
         )
     } ?: return HomeModel.Loading
 }

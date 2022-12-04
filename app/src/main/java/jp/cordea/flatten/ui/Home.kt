@@ -5,10 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -31,14 +28,13 @@ fun Home(navController: NavController, models: Flow<HomeModel> = get()) {
     val context = LocalContext.current
     when (val m = model) {
         is HomeModel.Loaded -> {
-            val event by m.onEvent.collectAsState(initial = null)
-            LaunchedEffect(event) {
-                when (val e = event) {
-                    is HomeEvent.OpenUrl ->
-                        context.startActivity(Intent(Intent.ACTION_VIEW, e.url))
-                    HomeEvent.NavigateToUser ->
+            LaunchedEffect(m.uiEvent) {
+                when (val event = m.uiEvent) {
+                    is HomeUiEvent.OpenUrl ->
+                        context.startActivity(Intent(Intent.ACTION_VIEW, event.url))
+                    HomeUiEvent.NavigateToUser ->
                         navController.navigate(TAG_USER)
-                    null -> {}
+                    HomeUiEvent.Empty -> {}
                 }
             }
         }
