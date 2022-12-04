@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import io.ktor.http.auth.*
 import kotlinx.coroutines.flow.Flow
@@ -25,14 +26,32 @@ import java.util.*
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun Home(models: Flow<HomeModel> = get()) {
+fun Home(navController: NavController, models: Flow<HomeModel> = get()) {
     val model by models.collectAsState(initial = HomeModel.Loading)
+    val context = LocalContext.current
+    when (val m = model) {
+        is HomeModel.Loaded -> {
+            val event by m.onEvent.collectAsState(initial = null)
+            LaunchedEffect(event) {
+                when (val e = event) {
+                    is HomeEvent.OpenUrl ->
+                        context.startActivity(Intent(Intent.ACTION_VIEW, e.url))
+                    HomeEvent.NavigateToUser ->
+                        navController.navigate(TAG_USER)
+                    null -> {}
+                }
+            }
+        }
+        HomeModel.Loading -> {}
+    }
     Scaffold(
         topBar = {
             MediumTopAppBar(
                 actions = {
                     when (val m = model) {
-                        is HomeModel.Loaded -> IconButton(onClick = { /*TODO*/ }) {
+                        is HomeModel.Loaded -> IconButton(onClick = {
+                            m.onClickIcon()
+                        }) {
                             Icon(
                                 painter = rememberAsyncImagePainter(m.thumbnail),
                                 contentDescription = "Profile"
@@ -47,34 +66,17 @@ fun Home(models: Flow<HomeModel> = get()) {
     ) { padding ->
         when (val m = model) {
             is HomeModel.Loaded ->
-                Body(model = m, modifier = Modifier.padding(padding))
+                LazyColumn(
+                    modifier = Modifier.padding(padding)
+                ) {
+                    m.items.map {
+                        item {
+                            HomeItem(model = it)
+                        }
+                    }
+                }
             HomeModel.Loading ->
                 CircularProgressIndicator()
-        }
-    }
-}
-
-@Composable
-private fun Body(
-    model: HomeModel.Loaded,
-    modifier: Modifier
-) {
-    val event by model.onEvent.collectAsState(initial = null)
-    val context = LocalContext.current
-    LaunchedEffect(event) {
-        when (val e = event) {
-            is HomeEvent.OpenUrl ->
-                context.startActivity(Intent(Intent.ACTION_VIEW, e.url))
-            null -> {}
-        }
-    }
-    LazyColumn(
-        modifier = modifier
-    ) {
-        model.items.map {
-            item {
-                HomeItem(model = it)
-            }
         }
     }
 }

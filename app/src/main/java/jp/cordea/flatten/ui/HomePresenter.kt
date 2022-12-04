@@ -13,12 +13,14 @@ sealed class HomeModel {
     object Loading : HomeModel()
     class Loaded(
         val thumbnail: String,
+        val onClickIcon: () -> Unit,
         val items: List<HomeItemModel>,
         val onEvent: Flow<HomeEvent>
     ) : HomeModel()
 }
 
 sealed class HomeEvent {
+    object NavigateToUser : HomeEvent()
     class OpenUrl(val url: Uri) : HomeEvent()
 }
 
@@ -44,6 +46,11 @@ fun homePresenter(
         }
         return HomeModel.Loaded(
             user.picture,
+            {
+                scope.launch {
+                    flow.emit(HomeEvent.NavigateToUser)
+                }
+            },
             scores.map {
                 HomeItemModel(it.title, it.subtitle, it.publicationDate) {
                     scope.launch {

@@ -13,7 +13,7 @@ const val TAG_USER = "user"
 fun NavGraph(navController: NavHostController = rememberNavController()) {
     NavHost(navController = navController, startDestination = TAG_HOME) {
         composable(route = TAG_HOME) {
-            Home()
+            Home(navController)
         }
         composable(route = TAG_USER) {
             User()
