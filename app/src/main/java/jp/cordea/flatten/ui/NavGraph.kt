@@ -16,7 +16,7 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
             Home(navController)
         }
         composable(route = TAG_USER) {
-            User()
+            User(navController)
         }
     }
 }
