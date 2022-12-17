@@ -17,13 +17,14 @@ import coil.compose.rememberAsyncImagePainter
 import io.ktor.http.auth.*
 import kotlinx.coroutines.flow.Flow
 import org.koin.androidx.compose.get
+import org.koin.core.qualifier.named
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun Home(navController: NavController, models: Flow<HomeModel> = get()) {
+fun Home(navController: NavController, models: Flow<HomeModel> = get(named(TAG_HOME))) {
     val model by models.collectAsState(initial = HomeModel.Loading)
     val context = LocalContext.current
     when (val m = model) {
