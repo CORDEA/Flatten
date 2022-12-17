@@ -1,13 +1,19 @@
 package jp.cordea.flatten.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -53,22 +59,43 @@ fun User(navController: NavController, models: Flow<UserModel> = get(named(TAG_U
             is UserModel.Loaded -> Box(
                 modifier = Modifier.padding(padding)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    AsyncImage(
-                        model = m.thumbnail,
-                        contentDescription = m.name,
-                        modifier = Modifier.size(72.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        style = MaterialTheme.typography.bodyLarge,
-                        text = m.name
-                    )
-                }
+                Body(m)
             }
             UserModel.Loading -> CircularProgressIndicator()
         }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterialApi::class)
+private fun Body(model: UserModel.Loaded) {
+    val state = rememberPullRefreshState(
+        refreshing = model.refreshing,
+        onRefresh = { model.onClickRefresh() }
+    )
+    Box(modifier = Modifier.pullRefresh(state)) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            item {
+                AsyncImage(
+                    model = model.thumbnail,
+                    contentDescription = model.name,
+                    modifier = Modifier.size(72.dp)
+                )
+            }
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            item {
+                Text(
+                    style = MaterialTheme.typography.bodyLarge,
+                    text = model.name
+                )
+            }
+        }
+        PullRefreshIndicator(model.refreshing, state, Modifier.align(Alignment.TopCenter))
     }
 }
